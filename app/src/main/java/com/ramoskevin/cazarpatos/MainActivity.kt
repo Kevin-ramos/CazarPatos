@@ -1,13 +1,17 @@
 package com.ramoskevin.cazarpatos
 
+import android.content.Intent
 import android.media.MediaPlayer
-import androidx.appcompat.app.AppCompatActivity
+import android.net.Uri
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.os.Handler
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import java.util.*
 
 
@@ -24,6 +28,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        getActionBar()?.setDisplayHomeAsUpEnabled(true)
         //Inicialización de variables
         textViewUsuario = findViewById(R.id.textViewUsuario)
         textViewContador = findViewById(R.id.textViewContador)
@@ -91,6 +97,7 @@ class MainActivity : AppCompatActivity() {
         val builder = AlertDialog.Builder(this)
         builder
             .setMessage("Felicidades!!\nHas conseguido cazar $contador patos")
+            .setIcon(R.drawable.ic_info_foreground)
             .setTitle("Fin del juego")
             .setPositiveButton("Reiniciar",
                 { _, _ ->
@@ -110,6 +117,45 @@ class MainActivity : AppCompatActivity() {
         moverPato()
         inicializarCuentaRegresiva()
     }
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_principal,menu)
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        val id = item.itemId
+
+        if (id == android.R.id.home) {
+            contadorTiempo.cancel()
+            finish()
+        }
+        return when (item.itemId) {
+            R.id.nuevoJuego -> {
+                reiniciarJuego()
+                true
+            }
+            R.id.jugarOnline -> {
+                val intentWeb = Intent().apply {
+                    action = Intent.ACTION_VIEW
+                    data = Uri.parse("https://duckhuntjs.com/")
+
+                }
+                startActivity(intentWeb)
+                true
+            }
+            R.id.salir -> {
+                contadorTiempo.cancel()
+                val intentLogin = Intent(this,LoginActivity::class.java)
+                startActivity(intentLogin)
+                finish()
+                true
+            }
+
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+
 
 
 }
