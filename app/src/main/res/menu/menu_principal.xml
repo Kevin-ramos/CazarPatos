@@ -3,12 +3,15 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/nuevoJuego"
-        android:title="Nuevo juego" />
+        android:id="@+id/action_nuevo_juego"
+        android:title="Nuevo Juego" />
     <item
-        android:id="@+id/jugarOnline"
-        android:title="Jugar online"
-        app:showAsAction="never" />
+        android:id="@+id/action_jugar_online"
+        android:title="Jugar Online" />
+    <item
+        android:id="@+id/action_ranking"
+        android:title="Hall de fama" />
+
     <item
         android:id="@+id/salir"
         android:title="Salir"
