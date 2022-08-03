@@ -15,6 +15,9 @@ import android.widget.Toast
 
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.MobileAds
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.ktx.database
 import com.google.firebase.firestore.ktx.firestore
@@ -29,6 +32,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var imageViewPato: ImageView
     private var mediaPlayer: MediaPlayer? = null
     private lateinit var database: DatabaseReference
+    private lateinit var  mAdView: AdView
     var contador = 0
     var anchoPantalla = 0
     var alturaPantalla = 0
@@ -42,6 +46,15 @@ class MainActivity : AppCompatActivity() {
         textViewTiempo = findViewById(R.id.textViewTiempo)
         imageViewPato = findViewById(R.id.imageViewPato)
         mediaPlayer = MediaPlayer.create(this, R.raw.gunshot)
+
+        MobileAds.initialize(this) {}
+
+        mAdView = findViewById<AdView>(R.id.adView)
+        //mAdView.adUnitId = "ca-app-pub-6551542058079007/8542304344" //TODO: Colocar esto antes de publicar
+        val adRequest = AdRequest.Builder().build()
+        mAdView.loadAd(adRequest)
+
+
         //database = Firebase.database.reference
         //Obtener el usuario de pantalla login
         val extras = intent.extras ?: return
