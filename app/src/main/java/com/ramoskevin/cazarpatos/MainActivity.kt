@@ -15,6 +15,8 @@ import android.widget.Toast
 
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.ktx.database
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import java.util.*
@@ -25,45 +27,48 @@ class MainActivity : AppCompatActivity() {
     lateinit var textViewContador: TextView
     lateinit var textViewTiempo: TextView
     lateinit var imageViewPato: ImageView
+    private var mediaPlayer: MediaPlayer? = null
+    private lateinit var database: DatabaseReference
     var contador = 0
     var anchoPantalla = 0
     var alturaPantalla = 0
     var gameOver = false
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-        getActionBar()?.setDisplayHomeAsUpEnabled(true)
         //Inicialización de variables
         textViewUsuario = findViewById(R.id.textViewUsuario)
         textViewContador = findViewById(R.id.textViewContador)
         textViewTiempo = findViewById(R.id.textViewTiempo)
         imageViewPato = findViewById(R.id.imageViewPato)
-
+        mediaPlayer = MediaPlayer.create(this, R.raw.gunshot)
+        //database = Firebase.database.reference
         //Obtener el usuario de pantalla login
         val extras = intent.extras ?: return
         var usuario = extras.getString(EXTRA_LOGIN) ?:"Unknown"
         usuario = usuario.substringBefore("@")
         textViewUsuario.setText(usuario)
+
         //Determina el ancho y largo de pantalla
         inicializarPantalla()
         //Cuenta regresiva del juego
         inicializarCuentaRegresiva()
-
         //Evento clic sobre la imagen del pato
         imageViewPato.setOnClickListener {
             if (gameOver) return@setOnClickListener
             contador++
-            MediaPlayer.create(this, R.raw.gunshot).start()
+            if (! mediaPlayer!!.isPlaying){
+                mediaPlayer?.start()
+            }
             textViewContador.setText(contador.toString())
             imageViewPato.setImageResource(R.drawable.duck_clicked)
             //Evento que se ejecuta luego de 500 milisegundos
             Handler().postDelayed(Runnable {
                 imageViewPato.setImageResource(R.drawable.duck)
                 moverPato()
-            }, 500)
-
+                mediaPlayer?.pause()
+                mediaPlayer?.seekTo(0)
+            }, 600)
         }
     }
     private fun inicializarPantalla() {
@@ -86,21 +91,23 @@ class MainActivity : AppCompatActivity() {
         imageViewPato.setY(randomY.toFloat())
     }
 
+    var contadorTiempo = object : CountDownTimer(10000, 1000) {
+        override fun onTick(millisUntilFinished: Long) {
+            val segundosRestantes = millisUntilFinished / 1000
+            textViewTiempo.setText("${segundosRestantes}s")
+        }
+        override fun onFinish() {
+            textViewTiempo.setText("0s")
+            gameOver = true
+            mostrarDialogoGameOver()
+            val nombreJugador = textViewUsuario.text.toString()
+            val patosCazados = textViewContador.text.toString()
+            procesarPuntajePatosCazados(nombreJugador, patosCazados.toInt()) //Firestore
+            //procesarPuntajePatosCazadosRTDB(nombreJugador, patosCazados.toInt()) //Realtime Database
+        }
+    }
     private fun inicializarCuentaRegresiva() {
-        object : CountDownTimer(10000, 1000) {
-            override fun onTick(millisUntilFinished: Long) {
-                val segundosRestantes = millisUntilFinished / 1000
-                textViewTiempo.setText("${segundosRestantes}s")
-            }
-            override fun onFinish() {
-                textViewTiempo.setText("0s")
-                gameOver = true
-                mostrarDialogoGameOver()
-                val nombreJugador = textViewUsuario.text.toString()
-                val patosCazados = textViewContador.text.toString()
-                procesarPuntajePatosCazados(nombreJugador, patosCazados.toInt())
-            }
-        }.start()
+        contadorTiempo.start()
     }
 
     private fun mostrarDialogoGameOver() {
@@ -119,6 +126,20 @@ class MainActivity : AppCompatActivity() {
                 })
         builder.create().show()
     }
+
+    override fun onStop() {
+        Log.w(EXTRA_LOGIN, "Play canceled")
+        contadorTiempo.cancel()
+        textViewTiempo.text = "0s"
+        gameOver = true
+        //mediaPlayer?.stop()
+        super.onStop()
+    }
+    override fun onDestroy() {
+        //mediaPlayer?.release()
+        super.onDestroy()
+    }
+
     fun reiniciarJuego(){
         contador = 0
         gameOver = false
@@ -157,6 +178,12 @@ class MainActivity : AppCompatActivity() {
                 Log.w(EXTRA_LOGIN, "Error getting documents", exception)
                 Toast.makeText(this, "Error al obtener datos de jugador", Toast.LENGTH_LONG).show()
             }
+    }
+
+    fun procesarPuntajePatosCazadosRTDB(nombreJugador:String, patosCazados:Int){
+        val jugador = Jugador(nombreJugador,patosCazados)
+        val nombreJugadorNuevo = nombreJugador.replace(".","_")
+        database.child("ranking").child(nombreJugadorNuevo).setValue(jugador)
     }
     fun ingresarPuntajeJugador(jugador:Jugador){
         val db = Firebase.firestore

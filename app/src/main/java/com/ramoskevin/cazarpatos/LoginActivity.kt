@@ -5,14 +5,13 @@ import android.media.MediaPlayer
 import android.os.Bundle
 import android.util.Log
 import android.util.Patterns
-import android.widget.Button
-import android.widget.CheckBox
-import android.widget.EditText
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.ktx.storage
 import java.util.regex.Pattern
 
 
@@ -24,7 +23,10 @@ class LoginActivity : AppCompatActivity() {
     lateinit var buttonNewUser:Button
     lateinit var checkBoxRecordarme: CheckBox
     lateinit var mediaPlayer: MediaPlayer
+    lateinit var imageView: ImageView
+
     private lateinit var auth: FirebaseAuth
+    private lateinit var storage: FirebaseStorage
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,11 +38,12 @@ class LoginActivity : AppCompatActivity() {
         buttonLogin = findViewById(R.id.buttonLogin)
         buttonNewUser = findViewById(R.id.buttonNewUser)
         checkBoxRecordarme = findViewById(R.id.checkBoxRecordarme)
+        imageView = findViewById(R.id.imageViewLogo)
 
         // Initialize Firebase Auth
         auth = Firebase.auth
-
-        LeerDatosDePreferencias()
+        // Initialize Firebase Storage
+        storage = Firebase.storage
 
         //Eventos clic
         buttonLogin.setOnClickListener {
